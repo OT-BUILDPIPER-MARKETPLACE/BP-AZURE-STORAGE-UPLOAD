@@ -1,19 +1,28 @@
-FROM mcr.microsoft.com/azure-cli:2.65.0
+FROM debian:bullseye-slim
 
-# Install dependencies
-RUN apk update && apk add --no-cache \
-    bash \
-    jq \
-    shadow \
-    coreutils \
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies + prerequisites for Azure CLI
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
     curl \
-    unzip \
+    gnupg \
+    lsb-release \
+    jq \
     git \
-    && rm -rf /var/cache/apk/*
+    unzip \
+    bash \
+    coreutils \
+    passwd \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create buildpiper user & group (non-root)
-RUN addgroup -g 65522 buildpiper && \
-    adduser -D -u 65522 -G buildpiper -h /home/buildpiper buildpiper && \
+# Install Azure CLI
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+
+# Create buildpiper user & group
+RUN groupadd -g 65522 buildpiper && \
+    useradd -m -u 65522 -g buildpiper -s /bin/bash buildpiper && \
     mkdir -p /home/buildpiper && chown -R buildpiper:buildpiper /home/buildpiper
 
 # Create required directories & assign permissions
@@ -22,27 +31,25 @@ RUN mkdir -p \
     /opt/buildpiper/shell-functions \
     /opt/buildpiper/data \
     /bp/workspace && \
-    chown -R buildpiper:buildpiper /src /bp /opt
+    chown -R buildpiper:buildpiper /src /bp /opt || true
 
 # Set environment variables
 ENV SLEEP_DURATION=5s
 ENV ACTIVITY_SUB_TASK_CODE=AZURE_BLOB_UPLOADER
 
-# Copy files with correct ownership
+# Copy scripts
 COPY --chown=buildpiper:buildpiper build.sh /home/buildpiper/build.sh
 COPY --chown=buildpiper:buildpiper BP-BASE-SHELL-STEPS /opt/buildpiper/shell-functions/
 
-# Set permissions on script and workspace
+# Set permissions
 RUN chmod +x /home/buildpiper/build.sh && \
     chown -R buildpiper:buildpiper /bp/workspace && \
     mkdir -p /home/buildpiper/reports && \
     chown -R buildpiper:buildpiper /home/buildpiper
 
-# Switch to non-root user
+# Switch to non-root
 USER buildpiper
 
-# Set working directory to user's home
 WORKDIR /home/buildpiper
 
-# Entrypoint and default command
 ENTRYPOINT ["./build.sh"]
