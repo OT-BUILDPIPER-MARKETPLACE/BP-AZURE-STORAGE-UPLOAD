@@ -1,25 +1,39 @@
-# bp_s3uploader_step
-I'll let people to upload file in s3 bucket via this step
+# bp_azure_storage_uploader_step
+I'll let people to upload file in azure storage via this step
 
 ## Setup
-* Clone the code available at [BP-S3-UPLOADER-STEP](https://github.com/OT-BUILDPIPER-MARKETPLACE/BP-S3-UPLOADER-STEP)
+* Clone the code available at [BP-AZURE-STORAGE-UPLOAD](https://github.com/OT-BUILDPIPER-MARKETPLACE/BP-AZURE-STORAGE-UPLOAD)
 * Build the docker image
 
 ```
 git submodule init
 git submodule update
-docker build -t ot/s3-uploader-step:0.1 .
+docker build -t ot/azure-storage-uploader-step:0.1 .
 ```
 
 * Do local testing via image only
 
 ```
 # upload with default 
-docker run -it --rm -v $PWD:/src -e WORKSPACE=/src -e CODEBASE_DIR=/ ot/s3-uploader-step:0.1
+docker run -it --rm \
+  -v $PWD:/src \
+  -e WORKSPACE=/src \
+  -e CODEBASE_DIR=/ \
+  -e AZURE_STORAGE_ACCOUNT=<storage_account_name> \
+  -e AZURE_STORAGE_KEY=<storage_account_key> \
+  -e AZURE_STORAGE_CONTAINER=<container_name> \
+  ot/azure-storage-uploader-step:0.1
 
 # upload with specific bucket name and file to be uploaded
-docker run -it --rm -v $PWD:/src  -e FILE_TO_BE_UPLOADED=build.sh -e S3_BUCKET=test -e WORKSPACE=/src -e CODEBASE_DIR=/ ot/s3-uploader-step:0.0.1
-
-#debug
-docker run -it --rm -v $PWD:/src -e WORKSPACE=/src -e CODEBASE_DIR=/ -e entrypoint bash ot/s3-uploader-step:0.1 
+docker run -it --rm \
+  -v $PWD:/src \
+  -e TARGET_FILE=build.sh \
+  -e SOURCE_DIR=/app \
+  -e DESTINATION_DIR=app \
+  -e AZURE_STORAGE_ACCOUNT=<storage_account_name> \
+  -e AZURE_STORAGE_KEY=<storage_account_key> \
+  -e AZURE_STORAGE_CONTAINER=test-container \
+  -e WORKSPACE=/src \
+  -e CODEBASE_DIR=/ \
+  ot/azure-storage-uploader-step:0.0.1
 ```
