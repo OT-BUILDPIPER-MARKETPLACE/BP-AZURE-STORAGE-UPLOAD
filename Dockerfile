@@ -27,7 +27,6 @@ RUN groupadd -g 65522 buildpiper && \
 
 # Create required directories & assign permissions
 RUN mkdir -p \
-    /bp/execution_dir \
     /opt/buildpiper/shell-functions \
     /opt/buildpiper/data \
     /bp/workspace && \
